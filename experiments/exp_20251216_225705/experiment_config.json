@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-12-16 22:57:05",
+  "parameters": {
+    "MIN_SUPPORT": 0.02,
+    "FILTER_MIN_SUPPORT": 0.02,
+    "FILTER_MIN_CONF": 0.45,
+    "FILTER_MIN_LIFT": 1.7,
+    "FILTER_MAX_ANTECEDENTS": 2,
+    "FILTER_MAX_CONSEQUENTS": 1
+  },
+  "description": "Th\u00ed nghi\u1ec7m STRICT parameters"
+}
