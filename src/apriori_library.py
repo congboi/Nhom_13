@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy import stats
-from mlxtend.frequent_patterns import apriori, association_rules
+from mlxtend.frequent_patterns import apriori, association_rules, fpgrowth
 from sklearn.preprocessing import StandardScaler
 import plotly.express as px
 import networkx as nx
@@ -52,13 +52,13 @@ class DataCleaner:
             pd.DataFrame: Loaded dataframe
         """
         dtype = dict(
-            InvoiceNo=np.object_,
-            StockCode=np.object_,
-            Description=np.object_,
+            InvoiceNo=str,
+            StockCode=str,
+            Description=str,
             Quantity=np.int64,
             UnitPrice=np.float64,
-            CustomerID=np.object_,
-            Country=np.object_,
+            CustomerID=str,
+            Country=str,
         )
 
         self.df = pd.read_csv(
@@ -238,9 +238,16 @@ class BasketPreparer:
         Returns:
             pd.DataFrame: Basket format dataframe
         """
-
+        # Kiểm tra và làm sạch dữ liệu trước
+        if self.item_col not in self.df.columns:
+            raise ValueError(f"Column '{self.item_col}' not found in dataframe")
+        
+        # Loại bỏ các giá trị Description trống
+        df_clean = self.df[self.df[self.item_col].notna()].copy()
+        
+        # Tạo basket
         basket = (
-            self.df.groupby([self.invoice_col, self.item_col])[self.quantity_col]
+            df_clean.groupby([self.invoice_col, self.item_col])[self.quantity_col]
             .sum()
             .unstack()
             .fillna(0)
@@ -259,10 +266,11 @@ class BasketPreparer:
         Returns:
             pd.DataFrame: Boolean encoded basket dataframe
         """
-
         if self.basket is None:
-            raise ValueError("Basket not created. Please run create_basket() first.")
-        basket_bool = self.basket.applymap(lambda x: 1 if x >= threshold else 0)
+            self.create_basket()  # TỰ ĐỘNG TẠO BASKET NẾU CHƯA TỒN TẠI
+            
+        # Sửa lỗi FutureWarning: dùng map thay cho applymap
+        basket_bool = self.basket.map(lambda x: 1 if x >= threshold else 0)
         basket_bool = basket_bool.astype(bool)
         self.basket_bool = basket_bool
         return self.basket_bool
@@ -275,9 +283,10 @@ class BasketPreparer:
             output_path (str): Path to save the Parquet file
         """
         if self.basket_bool is None:
-            raise ValueError("Basket not encoded. Please call encode_basket() first.")
-        basket_bool_to_save = self.basket_bool.reset_index(drop=True)
-
+            self.encode_basket()  # Tự động encode nếu chưa có
+        
+        basket_bool_to_save = self.basket_bool.reset_index()
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         basket_bool_to_save.to_parquet(output_path, index=False)
         print(f"Đã lưu basket boolean: {output_path}")
 
@@ -317,7 +326,6 @@ class AssociationRulesMiner:
         Returns:
             pd.DataFrame: DataFrame of frequent itemsets
         """
-
         fi = apriori(
             self.basket_bool,
             min_support=min_support,
@@ -344,11 +352,8 @@ class AssociationRulesMiner:
         Returns:
             pd.DataFrame: DataFrame of association rules
         """
-
         if self.frequent_itemsets is None:
-            raise ValueError(
-                "Frequent itemsets not mined. Please run mine_frequent_itemsets() first."
-            )
+            self.mine_frequent_itemsets()  # Tự động mine nếu chưa có
 
         rules = association_rules(
             self.frequent_itemsets,
@@ -373,7 +378,7 @@ class AssociationRulesMiner:
             pd.DataFrame: Rules dataframe with extra readable columns
         """
         if self.rules is None:
-            raise ValueError("rules is not available. Call generate_rules() first.")
+            self.generate_rules()  # Tự động generate rules nếu chưa có
 
         rules = self.rules.copy()
         rules["antecedents_str"] = rules["antecedents"].apply(self._frozenset_to_str)
@@ -395,7 +400,7 @@ class AssociationRulesMiner:
         Filter rules based on support, confidence, lift and length of antecedents/consequents.
         """
         if self.rules is None:
-            raise ValueError("rules is not available. Call generate_rules() first.")
+            self.generate_rules()  # Tự động generate rules nếu chưa có
 
         filtered = self.rules.copy()
 
@@ -427,7 +432,7 @@ class AssociationRulesMiner:
         """
         if rules_df is None:
             if self.rules is None:
-                raise ValueError("No rules to save.")
+                self.generate_rules()  # Tự động generate rules nếu chưa có
             rules_df = self.rules
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -871,6 +876,7 @@ class DataVisualizer:
         plt.ylabel("Antecedent")
         plt.tight_layout()
         plt.show()
+        
     def plot_rules_support_confidence_scatter_interactive(
         self,
         rules_df: pd.DataFrame,
@@ -993,3 +999,105 @@ class DataVisualizer:
         plt.axis("off")
         plt.tight_layout()
         plt.show()
+
+
+# =========================================================
+# 5. FP-GROWTH MINER
+# =========================================================
+
+class FPGrowthMiner:
+    """
+    Lớp thực hiện thuật toán FP-Growth.
+    FP-Growth nhanh hơn Apriori vì không phải sinh tập ứng viên.
+    """
+    def __init__(self, basket_df):
+        self.basket_df = basket_df
+        
+    def run(self, min_support=0.01, use_colnames=True):
+        """
+        Thực hiện khai phá frequent itemsets bằng FP-Growth.
+        
+        Args:
+            min_support (float): Ngưỡng support tối thiểu
+            use_colnames (bool): Có sử dụng tên cột không
+            
+        Returns:
+            pd.DataFrame: Frequent itemsets
+        """
+        # Sử dụng fpgrowth từ mlxtend
+        frequent_itemsets = fpgrowth(
+            self.basket_df, 
+            min_support=min_support, 
+            use_colnames=use_colnames
+        )
+        frequent_itemsets.sort_values('support', ascending=False, inplace=True)
+        return frequent_itemsets
+
+
+# =========================================================
+# 6. WEIGHTED ASSOCIATION MINER
+# =========================================================
+
+class WeightedAssociationMiner:
+    """
+    Lớp thực hiện tính toán trọng số (Dùng cho Chủ đề 2)
+    """
+    @staticmethod
+    def compute_weighted_metrics(rules_df, basket_df, df_raw):
+        """
+        Tính toán các metrics có trọng số cho luật kết hợp.
+        
+        Args:
+            rules_df (pd.DataFrame): Dataframe chứa luật kết hợp
+            basket_df (pd.DataFrame): Basket boolean
+            df_raw (pd.DataFrame): Dữ liệu gốc
+            
+        Returns:
+            pd.DataFrame: Rules với các cột weighted metrics
+        """
+        # 1. Tính doanh thu cho mỗi hóa đơn (Trọng số)
+        df_raw['TotalValue'] = df_raw['Quantity'] * df_raw['UnitPrice']
+        invoice_weights = df_raw.groupby('InvoiceNo')['TotalValue'].sum()
+        total_market_revenue = invoice_weights.sum()
+        
+        # 2. Vector trọng số khớp với danh sách hóa đơn
+        # Reset index để đảm bảo mapping đúng
+        basket_df_reset = basket_df.reset_index()
+        weights_vector = basket_df_reset['InvoiceNo'].map(invoice_weights).fillna(0).values
+        
+        # 3. Tính Weighted Support cho từng luật bằng Numpy
+        def calculate_ws(itemset):
+            cols = list(itemset)
+            mask = basket_df_reset[cols].all(axis=1).values
+            if mask.any():
+                return np.sum(weights_vector[mask]) / total_market_revenue
+            else:
+                return 0.0
+
+        # Tính toán thêm cột weighted_support
+        # rules_df['weighted_support'] = rules_df['antecedents'].union(rules_df['consequents']).apply(calculate_ws)
+        # Hợp nhất antecedents và consequents cho từng dòng trước khi tính toán
+        rules_df['weighted_support'] = rules_df.apply(
+            lambda row: calculate_ws(row['antecedents'].union(row['consequents'])), 
+            axis=1
+)
+        
+        # 4. Tính Weighted Confidence
+        def calculate_wc(row):
+            antecedent_support = np.sum(weights_vector[basket_df_reset[list(row['antecedents'])].all(axis=1).values])
+            if antecedent_support > 0:
+                itemset_support = np.sum(weights_vector[basket_df_reset[list(row['antecedents'].union(row['consequents']))].all(axis=1).values])
+                return itemset_support / antecedent_support
+            else:
+                return 0.0
+                
+        rules_df['weighted_confidence'] = rules_df.apply(calculate_wc, axis=1)
+        
+        # 5. Tính Weighted Lift
+        # Tránh chia cho 0
+        rules_df['weighted_lift'] = rules_df.apply(
+            lambda row: row['weighted_confidence'] / row['weighted_support'] if row['weighted_support'] > 0 else 0,
+            axis=1
+        )
+        
+        return rules_df

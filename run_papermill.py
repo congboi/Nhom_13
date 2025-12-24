@@ -69,6 +69,7 @@ pm.execute_notebook(
         RULES_OUTPUT_PATH=f"{experiment_dir}/rules_strict.csv",  # Lưu rules theo experiment
 
         # Tham số Apriori
+        MIN_SUPPORT=0.005,
         MIN_SUPPORT=0.02,
         MAX_LEN=3,
 
@@ -77,6 +78,9 @@ pm.execute_notebook(
         MIN_THRESHOLD=1.0,
 
         # Lọc luật
+        FILTER_MIN_SUPPORT=0.005,
+        FILTER_MIN_CONF=0.2,
+        FILTER_MIN_LIFT=1.2,
         FILTER_MIN_SUPPORT=0.02,
         FILTER_MIN_CONF=0.45,
         FILTER_MIN_LIFT=1.7,
@@ -105,7 +109,7 @@ pm.execute_notebook(
 print("\n" + "="*70)
 print("PHÂN TÍCH KẾT QUẢ THÍ NGHIỆM")
 print("="*70)
-
+print("Đã chạy xong pipeline")
 # Đọc rules đã tạo
 try:
     import pandas as pd
