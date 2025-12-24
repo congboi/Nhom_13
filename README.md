@@ -79,6 +79,7 @@ Chạy toàn bộ phân tích chỉ với 1 lệnh:
 ```bash
 python run_papermill.py
 ```
+
 Kết quả sinh ra:
 
 ```bash
@@ -89,6 +90,7 @@ notebooks/runs/apriori_modelling_run.ipynb
 ```
 
 ### Changing Parameters
+
 Các tham số có thể chỉnh trong run_papermill.py:
 
 ```python
@@ -101,6 +103,7 @@ FILTER_MIN_LIFT=1.7
 Hoặc sửa trong cell PARAMETERS của mỗi notebook để chạy với cấu hình khác nhau.
 
 ### Visualization & Results
+
 Notebook 03 hiển thị các biểu đồ sau:
 
 Top luật theo Lift
@@ -120,6 +123,7 @@ jupyter nbconvert notebooks/runs/priori_modelling_run.ipynb --to html
 ```
 
 ### Ứng dụng thực tế
+
 Product recommendation
 
 Cross-selling strategy
@@ -132,25 +136,29 @@ Sắp xếp sản phẩm tại siêu thị
 
 ### Tech Stack
 
-| Công nghệ | Mục đích |
-|----------|----------|
-| Python | Ngôn ngữ chính |
-| Pandas | Xử lý dữ liệu transaction |
-| MLxtend | Apriori / FP-Growth association rules |
-| Papermill | Chạy pipeline notebook tự động |
-| Matplotlib & Seaborn | Visualization biểu đồ tĩnh |
-| Plotly | Dashboard / biểu đồ tương tác |
-| Jupyter Notebook | Môi trường notebook |
+| Công nghệ            | Mục đích                              |
+| -------------------- | ------------------------------------- |
+| Python               | Ngôn ngữ chính                        |
+| Pandas               | Xử lý dữ liệu transaction             |
+| MLxtend              | Apriori / FP-Growth association rules |
+| Papermill            | Chạy pipeline notebook tự động        |
+| Matplotlib & Seaborn | Visualization biểu đồ tĩnh            |
+| Plotly               | Dashboard / biểu đồ tương tác         |
+| Jupyter Notebook     | Môi trường notebook                   |
 
 ### Roadmap
- Thêm FP-Growth notebook (04)
 
- Streamlit dashboard để lọc luật
+Thêm FP-Growth notebook (04)
 
+Streamlit dashboard để lọc luật
 
 ### Author
+
 Project được thực hiện bởi:
 Nhom_13
 
 📄 License
+
+MIT — sử dụng tự do cho nghiên cứu, học thuật và ứng dụng nội bộ.
+
 MIT — sử dụng tự do cho nghiên cứu, học thuật và ứng dụng nội bộ.

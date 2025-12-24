@@ -1,0 +1,32 @@
+{
+  "total_rules": 104,
+  "avg_support": 0.025393451229975234,
+  "avg_confidence": 0.5765369488966064,
+  "avg_lift": 10.116194285274542,
+  "min_support": 0.0200321846734365,
+  "max_support": 0.0435602907718772,
+  "min_confidence": 0.4527802294792586,
+  "max_confidence": 0.9027522935779816,
+  "min_lift": 4.360061064794501,
+  "max_lift": 27.20028218579145,
+  "top_rules_lift": [
+    {
+      "antecedents": "WOODEN HEART CHRISTMAS SCANDINAVIAN",
+      "consequents": "WOODEN STAR CHRISTMAS SCANDINAVIAN",
+      "lift": 27.20028218579145,
+      "confidence": 0.7229862475442044
+    },
+    {
+      "antecedents": "WOODEN STAR CHRISTMAS SCANDINAVIAN",
+      "consequents": "WOODEN HEART CHRISTMAS SCANDINAVIAN",
+      "lift": 27.20028218579145,
+      "confidence": 0.7682672233820459
+    },
+    {
+      "antecedents": "GREEN REGENCY TEACUP AND SAUCER, ROSES REGENCY TEACUP AND SAUCER ",
+      "consequents": "PINK REGENCY TEACUP AND SAUCER",
+      "lift": 18.043003663003663,
+      "confidence": 0.7028571428571428
+    }
+  ]
+}
